@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Verse Trainer — Bible Study Hub</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a1a; font-family: system-ui, sans-serif; min-height: 100vh; padding: 20px 16px 60px; color: white; }
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; color: #f472b6; font-size: 13px; text-decoration: none; margin-bottom: 20px; }
+    .back-btn:hover { color: white; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header .icon { font-size: 40px; margin-bottom: 8px; }
+    .header h1 { font-size: 22px; font-weight: 900; }
+    .header p { font-size: 13px; color: #9ca3af; margin-top: 4px; }
+
+    .tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 9px 6px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #9ca3af; text-align: center; transition: all 0.2s; }
+    .tab.active { border-color: #f472b6; color: #f472b6; background: rgba(244,114,182,0.1); }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+    .card-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #f472b6; margin-bottom: 12px; }
+
+    /* Stats */
+    .stats-row { display: flex; gap: 10px; margin-bottom: 16px; }
+    .stat-card { flex: 1; background: #12122a; border-radius: 12px; padding: 12px; text-align: center; border: 1px solid #1e1e40; }
+    .stat-val { font-size: 1.6rem; font-weight: 900; color: #f472b6; }
+    .stat-lbl { font-size: 10px; color: #6b7280; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Suggested verses */
+    .verse-list { display: flex; flex-direction: column; gap: 8px; }
+    .verse-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.15s; }
+    .verse-item:hover { background: rgba(244,114,182,0.08); }
+    .verse-item.added { border-color: rgba(244,114,182,0.4); background: rgba(244,114,182,0.08); }
+    .verse-ref { font-size: 13px; font-weight: 800; color: #f472b6; flex-shrink: 0; min-width: 90px; }
+    .verse-preview { font-size: 12px; color: rgba(255,255,255,0.65); line-height: 1.4; flex: 1; }
+    .verse-add-btn { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; border: 1.5px solid #f472b6; color: #f472b6; background: transparent; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+    .verse-add-btn.added { background: rgba(244,114,182,0.2); }
+
+    /* Custom add */
+    input[type=text], textarea { width: 100%; background: rgba(10,10,26,0.8); border: 1px solid rgba(244,114,182,0.4); border-radius: 10px; padding: 11px 12px; font-size: 13px; color: white; font-family: system-ui, sans-serif; outline: none; }
+    input[type=text]:focus, textarea:focus { border-color: #f472b6; }
+    textarea { resize: none; margin-top: 8px; }
+    .add-btn { width: 100%; margin-top: 8px; padding: 11px; background: #9d174d; border: none; border-radius: 10px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .add-btn:hover { background: #f472b6; }
+
+    /* My verses list */
+    .my-verse { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+    .my-verse-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .my-verse-ref { font-size: 14px; font-weight: 800; color: #f472b6; }
+    .my-verse-text { font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.6; }
+    .my-verse-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .practice-btn { padding: 7px 14px; background: #9d174d; border: none; border-radius: 8px; color: white; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .practice-btn:hover { background: #f472b6; }
+    .delete-btn { background: none; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: #ef4444; font-size: 12px; padding: 7px 10px; cursor: pointer; }
+    .mastered-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+
+    /* Practice mode */
+    .practice-card { background: linear-gradient(135deg, #500724, #831843); border-radius: 16px; padding: 20px; margin-bottom: 14px; text-align: center; }
+    .practice-ref { font-size: 18px; font-weight: 900; color: #f9a8d4; margin-bottom: 16px; }
+    .practice-words { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; min-height: 60px; }
+    .word-tile { padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; user-select: none; }
+    .word-tile.unplaced { background: rgba(255,255,255,0.15); color: white; }
+    .word-tile.unplaced:hover { background: rgba(255,255,255,0.25); }
+    .word-tile.placed { background: rgba(244,114,182,0.2); color: #f9a8d4; border: 1px solid #f472b699; }
+    .answer-area { min-height: 60px; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; border: 2px dashed rgba(255,255,255,0.15); }
+    .answer-area .word-tile { background: rgba(244,114,182,0.25); color: white; border: 1px solid #f472b655; }
+    .answer-area .word-tile:hover { background: rgba(244,114,182,0.4); }
+    .practice-btn-row { display: flex; gap: 10px; justify-content: center; }
+    .check-btn { padding: 10px 24px; background: #9d174d; border: none; border-radius: 10px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .check-btn:hover { background: #f472b6; }
+    .reset-btn { padding: 10px 16px; background: rgba(255,255,255,0.08); border: none; border-radius: 10px; color: #9ca3af; font-size: 13px; cursor: pointer; }
+    .result-box { border-radius: 10px; padding: 12px 14px; margin-top: 12px; font-size: 13px; font-weight: 700; text-align: center; }
+    .result-box.correct { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: #4ade80; }
+    .result-box.incorrect { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+
+    /* Cover test */
+    .cover-verse { font-size: 15px; color: rgba(255,255,255,0.9); line-height: 1.8; letter-spacing: 0.3px; }
+    .blank { display: inline-block; background: rgba(244,114,182,0.2); border-bottom: 2px solid #f472b6; min-width: 60px; height: 20px; border-radius: 3px; vertical-align: middle; margin: 0 3px; }
+    .reveal-btn { width: 100%; margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.08); border: none; border-radius: 10px; color: #9ca3af; font-size: 13px; cursor: pointer; }
+
+    .empty-state { text-align: center; color: #4b5563; padding: 40px 0; font-size: 13px; }
+    .empty-state .e-icon { font-size: 36px; margin-bottom: 10px; }
+
+    .confirm-delete { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 8px 10px; margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+    .confirm-delete span { font-size: 12px; color: #fca5a5; flex: 1; }
+    .confirm-yes { background: #ef4444; border: none; border-radius: 6px; color: white; font-size: 11px; font-weight: 700; padding: 4px 10px; cursor: pointer; }
+    .confirm-no  { background: rgba(255,255,255,0.08); border: none; border-radius: 6px; color: #9ca3af; font-size: 11px; padding: 4px 10px; cursor: pointer; }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #9d174d; color: white; padding: 10px 22px; border-radius: 20px; font-size: 14px; font-weight: 700; z-index: 99; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<a class="back-btn" href="../index.html">← Bible Study Hub</a>
+<div class="header">
+  <div class="icon">🧠</div>
+  <h1>Memory Verse Trainer</h1>
+  <p>Hide God's Word in your heart</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('browse')">📖 Browse</div>
+  <div class="tab" onclick="switchTab('myverses')">⭐ My Verses</div>
+  <div class="tab" onclick="switchTab('practice')">🎯 Practice</div>
+</div>
+
+<!-- BROWSE -->
+<div id="tab-browse" class="view active">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val" id="totalVerses">0</div><div class="stat-lbl">Saved</div></div>
+    <div class="stat-card"><div class="stat-val" id="masteredVerses">0</div><div class="stat-lbl">Mastered</div></div>
+    <div class="stat-card"><div class="stat-val" id="practiceCount">0</div><div class="stat-lbl">Sessions</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">✨ Suggested Verses</div>
+    <div class="verse-list" id="suggestedList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">➕ Add Your Own</div>
+    <input type="text" id="customRef" placeholder="Reference — e.g. John 3:16"/>
+    <textarea id="customText" rows="3" placeholder="Type or paste the verse text..."></textarea>
+    <button class="add-btn" onclick="addCustom()">Add Verse</button>
+  </div>
+</div>
+
+<!-- MY VERSES -->
+<div id="tab-myverses" class="view">
+  <div id="myVersesList"></div>
+</div>
+
+<!-- PRACTICE -->
+<div id="tab-practice" class="view">
+  <div id="practiceContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var STORAGE_KEY = 'memory-verses-v1';
+  var confirmingDelete = null;
+  var practiceVerseIdx = null;
+  var practiceMode = null; // 'scramble' or 'cover'
+  var scrambleAnswer = [];
+  var scrambleWords = [];
+  var revealed = false;
+
+  var SUGGESTED = [
+    { ref:"John 3:16",         text:"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." },
+    { ref:"Psalm 23:1",        text:"The LORD is my shepherd, I lack nothing." },
+    { ref:"Proverbs 3:5-6",    text:"Trust in the LORD with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight." },
+    { ref:"Romans 8:28",       text:"And we know that in all things God works for the good of those who love him, who have been called according to his purpose." },
+    { ref:"Joshua 1:9",        text:"Be strong and courageous. Do not be afraid; do not be discouraged, for the LORD your God will be with you wherever you go." },
+    { ref:"Philippians 4:13",  text:"I can do all this through him who gives me strength." },
+    { ref:"Isaiah 40:31",      text:"But those who hope in the LORD will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint." },
+    { ref:"Jeremiah 29:11",    text:"For I know the plans I have for you, declares the LORD, plans to prosper you and not to harm you, plans to give you hope and a future." },
+    { ref:"Romans 3:23",       text:"For all have sinned and fall short of the glory of God." },
+    { ref:"Romans 6:23",       text:"For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord." },
+    { ref:"Ephesians 2:8-9",   text:"For it is by grace you have been saved, through faith — and this is not from yourselves, it is the gift of God — not by works, so that no one can boast." },
+    { ref:"Psalm 119:11",      text:"I have hidden your word in my heart that I might not sin against you." },
+    { ref:"Matthew 28:19-20",  text:"Therefore go and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit, and teaching them to obey everything I have commanded you." },
+    { ref:"John 14:6",         text:"Jesus answered, 'I am the way and the truth and the life. No one comes to the Father except through me.'" },
+    { ref:"Philippians 4:6-7", text:"Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God. And the peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus." },
+    { ref:"Romans 8:1",        text:"Therefore, there is now no condemnation for those who are in Christ Jesus." },
+    { ref:"Psalm 46:1",        text:"God is our refuge and strength, an ever-present help in trouble." },
+    { ref:"Isaiah 53:5",       text:"But he was pierced for our transgressions, he was crushed for our iniquities; the punishment that brought us peace was on him, and by his wounds we are healed." },
+    { ref:"2 Timothy 3:16-17", text:"All Scripture is God-breathed and is useful for teaching, rebuking, correcting and training in righteousness, so that the servant of God may be thoroughly equipped for every good work." },
+    { ref:"Psalm 139:14",      text:"I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well." },
+  ];
+
+  // ── Storage ───────────────────────────────────────────────────────────────
+  function getData() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"verses":[],"sessions":0}'); } catch(e) { return {verses:[], sessions:0}; } }
+  function saveData(d) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch(e) {} }
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  function switchTab(id) {
+    ['browse','myverses','practice'].forEach(function(t,i) {
+      document.querySelectorAll('.tab')[i].classList.toggle('active', t === id);
+      document.getElementById('tab-' + t).classList.toggle('active', t === id);
+    });
+    if (id === 'myverses') renderMyVerses();
+    if (id === 'practice') renderPracticeHome();
+    if (id === 'browse') renderStats();
+  }
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  function renderStats() {
+    var d = getData();
+    document.getElementById('totalVerses').textContent = d.verses.length;
+    document.getElementById('masteredVerses').textContent = d.verses.filter(function(v) { return v.mastered; }).length;
+    document.getElementById('practiceCount').textContent = d.sessions || 0;
+  }
+
+  // ── Browse ────────────────────────────────────────────────────────────────
+  function renderSuggested() {
+    var d = getData();
+    var saved = d.verses.map(function(v) { return v.ref; });
+    document.getElementById('suggestedList').innerHTML = SUGGESTED.map(function(s) {
+      var isAdded = saved.indexOf(s.ref) !== -1;
+      return '<div class="verse-item' + (isAdded ? ' added' : '') + '">'
+        + '<div class="verse-ref">' + s.ref + '</div>'
+        + '<div class="verse-preview">' + s.text.substring(0,60) + (s.text.length > 60 ? '...' : '') + '</div>'
+        + '<button class="verse-add-btn' + (isAdded ? ' added' : '') + '" onclick="addSuggested(\'' + s.ref.replace(/'/g,"\\'") + '\')">' + (isAdded ? '✓ Added' : '+ Add') + '</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  function addSuggested(ref) {
+    var s = SUGGESTED.find(function(x) { return x.ref === ref; });
+    if (!s) return;
+    var d = getData();
+    if (d.verses.find(function(v) { return v.ref === ref; })) return;
+    d.verses.push({ ref: s.ref, text: s.text, mastered: false, added: new Date().toLocaleDateString() });
+    saveData(d);
+    renderSuggested();
+    renderStats();
+    showToast('Added: ' + ref);
+  }
+
+  function addCustom() {
+    var ref = document.getElementById('customRef').value.trim();
+    var text = document.getElementById('customText').value.trim();
+    if (!ref || !text) return showToast('Please enter both a reference and the verse text');
+    var d = getData();
+    if (d.verses.find(function(v) { return v.ref === ref; })) return showToast('That verse is already saved');
+    d.verses.push({ ref: ref, text: text, mastered: false, added: new Date().toLocaleDateString() });
+    saveData(d);
+    document.getElementById('customRef').value = '';
+    document.getElementById('customText').value = '';
+    renderSuggested();
+    renderStats();
+    showToast('Verse added ✓');
+  }
+
+  // ── My Verses ─────────────────────────────────────────────────────────────
+  function renderMyVerses() {
+    var d = getData();
+    if (!d.verses.length) {
+      document.getElementById('myVersesList').innerHTML = '<div class="empty-state"><div class="e-icon">📖</div><p>No verses saved yet.</p><p style="margin-top:6px;">Go to Browse to add verses.</p></div>';
+      return;
+    }
+    document.getElementById('myVersesList').innerHTML = d.verses.map(function(v, i) {
+      return '<div class="my-verse">'
+        + '<div class="my-verse-top">'
+        + '<div class="my-verse-ref">' + v.ref + (v.mastered ? ' <span class="mastered-badge">✓ Mastered</span>' : '') + '</div>'
+        + '<span style="font-size:11px;color:#6b7280;">' + (v.added || '') + '</span>'
+        + '</div>'
+        + '<div class="my-verse-text">' + v.text + '</div>'
+        + '<div class="my-verse-actions">'
+        + '<button class="practice-btn" onclick="startPractice(' + i + ',\'scramble\')">🔀 Scramble</button>'
+        + '<button class="practice-btn" onclick="startPractice(' + i + ',\'cover\')">🙈 Cover Test</button>'
+        + (v.mastered ? '<button class="practice-btn" style="background:rgba(255,255,255,0.08);color:#9ca3af;" onclick="toggleMastered(' + i + ')">Unmaster</button>' : '<button class="practice-btn" style="background:rgba(34,197,94,0.2);color:#4ade80;border:1px solid rgba(34,197,94,0.3);" onclick="toggleMastered(' + i + ')">Mark Mastered</button>')
+        + '<button class="delete-btn" onclick="askDelete(' + i + ')">🗑</button>'
+        + '</div>'
+        + (confirmingDelete === i ? '<div class="confirm-delete"><span>Delete this verse?</span><button class="confirm-yes" onclick="doDelete(' + i + ')">Delete</button><button class="confirm-no" onclick="cancelDelete()">Cancel</button></div>' : '')
+        + '</div>';
+    }).join('');
+  }
+
+  function toggleMastered(i) {
+    var d = getData();
+    d.verses[i].mastered = !d.verses[i].mastered;
+    saveData(d);
+    renderMyVerses();
+    renderStats();
+  }
+
+  function askDelete(i)   { confirmingDelete = i; renderMyVerses(); }
+  function cancelDelete() { confirmingDelete = null; renderMyVerses(); }
+  function doDelete(i) {
+    var d = getData();
+    d.verses.splice(i, 1);
+    saveData(d);
+    confirmingDelete = null;
+    renderMyVerses();
+    renderStats();
+    renderSuggested();
+  }
+
+  // ── Practice ──────────────────────────────────────────────────────────────
+  function renderPracticeHome() {
+    var d = getData();
+    if (!d.verses.length) {
+      document.getElementById('practiceContent').innerHTML = '<div class="empty-state"><div class="e-icon">🎯</div><p>No verses to practice yet.</p><p style="margin-top:6px;">Add verses in the Browse tab first.</p></div>';
+      return;
+    }
+    document.getElementById('practiceContent').innerHTML = '<div class="card"><div class="card-label">🎯 Choose a Verse to Practice</div>'
+      + d.verses.map(function(v, i) {
+          return '<div class="verse-item" style="margin-bottom:8px;">'
+            + '<div><div class="verse-ref">' + v.ref + (v.mastered ? ' <span class="mastered-badge" style="font-size:9px;">✓</span>' : '') + '</div></div>'
+            + '<div style="display:flex;gap:6px;">'
+            + '<button class="verse-add-btn" onclick="startPractice(' + i + ',\'scramble\')">🔀</button>'
+            + '<button class="verse-add-btn" onclick="startPractice(' + i + ',\'cover\')">🙈</button>'
+            + '</div>'
+          + '</div>';
+        }).join('')
+      + '</div>'
+      + '<div class="card" style="text-align:center;">'
+      + '<div class="card-label" style="text-align:center;">⚡ Random Practice</div>'
+      + '<p style="font-size:12px;color:#9ca3af;margin-bottom:12px;">Practice a random verse from your list</p>'
+      + '<button onclick="randomPractice(\'scramble\')" style="padding:10px 20px;background:#9d174d;border:none;border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;margin-right:8px;">🔀 Random Scramble</button>'
+      + '<button onclick="randomPractice(\'cover\')" style="padding:10px 20px;background:#9d174d;border:none;border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;">🙈 Random Cover</button>'
+      + '</div>';
+  }
+
+  function randomPractice(mode) {
+    var d = getData();
+    var i = Math.floor(Math.random() * d.verses.length);
+    startPractice(i, mode);
+  }
+
+  function startPractice(i, mode) {
+    var d = getData();
+    var verse = d.verses[i];
+    practiceVerseIdx = i;
+    practiceMode = mode;
+    revealed = false;
+
+    // Increment session count
+    d.sessions = (d.sessions || 0) + 1;
+    saveData(d);
+
+    switchTab('practice');
+
+    if (mode === 'scramble') renderScramble(verse);
+    else renderCover(verse);
+  }
+
+  function renderScramble(verse) {
+    var words = verse.text.split(' ');
+    scrambleWords = shuffle(words.slice());
+    scrambleAnswer = [];
+
+    document.getElementById('practiceContent').innerHTML =
+      '<a class="back-btn" href="#" onclick="renderPracticeHome();return false;" style="margin-bottom:16px;">← Back to Practice</a>'
+      + '<div class="practice-card">'
+      + '<div class="practice-ref">' + verse.ref + '</div>'
+      + '<p style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:12px;">Tap words to build the verse in order</p>'
+      + '<div class="answer-area" id="answerArea"></div>'
+      + '<div class="practice-words" id="wordBank"></div>'
+      + '<div class="practice-btn-row">'
+      + '<button class="reset-btn" onclick="resetScramble()">↺ Reset</button>'
+      + '<button class="check-btn" onclick="checkScramble()">Check ✓</button>'
+      + '</div>'
+      + '<div id="scrambleResult"></div>'
+      + '</div>';
+
+    renderWordBank();
+    renderAnswerArea();
+  }
+
+  function renderWordBank() {
+    var remaining = scrambleWords.filter(function(w, i) { return scrambleAnswer.indexOf(i) === -1; });
+    // Use indices to track which words have been placed
+    document.getElementById('wordBank').innerHTML = scrambleWords.map(function(w, i) {
+      var placed = scrambleAnswer.indexOf(i) !== -1;
+      return '<div class="word-tile ' + (placed ? 'placed' : 'unplaced') + '" onclick="placeWord(' + i + ')">' + w + '</div>';
+    }).join('');
+  }
+
+  function renderAnswerArea() {
+    document.getElementById('answerArea').innerHTML
